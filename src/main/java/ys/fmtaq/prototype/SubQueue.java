@@ -44,21 +44,21 @@ public class SubQueue extends AbstractActor {
     }
 
     private void handleTaskCompleteMsg(final TaskCompleteMsg msg) {
-        UUID taskIdForRemove = queue.peek();
+        UUID taskIdForStop = queue.peek();
 
-        if (taskIdForRemove == null) {
+        if (taskIdForStop == null) {
             log.error("receive message to complete task: '{}' but sub_queue: '{}' is empty", msg.getTaskId(),
                     msg.getSubQueueId());
             return;
         }
 
-        if (!taskIdForRemove.equals(msg.getTaskId())) {
+        if (!taskIdForStop.equals(msg.getTaskId())) {
             log.error("receive message to complete task: '{}' which is not a head of sub_queue: '{}'",
                     msg.getTaskId(), msg.getSubQueueId());
             return;
         }
 
-        if (!sendTaskCompleteMsgToTask(msg)) {
+        if (!sendStopTaskMsg(taskIdForStop)) {
             log.error("receive message to complete task: '{}' but cannot find this task in sub_queue: '{}'",
                     msg.getTaskId(), msg.getSubQueueId());
             return;
@@ -68,15 +68,15 @@ public class SubQueue extends AbstractActor {
         startNextTask();
     }
 
-    private boolean sendTaskCompleteMsgToTask(final TaskCompleteMsg msg) {
-        Option<ActorRef> optionalTaskRef = getContext().child(msg.getTaskId().toString());
+    private boolean sendStopTaskMsg(final UUID taskId) {
+        Option<ActorRef> optionalTaskRef = getContext().child(taskId.toString());
 
         if (optionalTaskRef.isEmpty()) {
             return false;
         }
 
         ActorRef taskRef = optionalTaskRef.get();
-        taskRef.tell(msg, getSelf());
+        taskRef.tell(new StopTaskMsg(), getSelf());
 
         return true;
     }
@@ -88,12 +88,12 @@ public class SubQueue extends AbstractActor {
             return;
         }
 
-        if (!sendStartTaskMsgToTask(taskId)) {
+        if (!sendStartTaskMsg(taskId)) {
             log.error("cannot find task: '{}' to start in sub_queue: '{}'", taskId, getSelf().path().name());
         }
     }
 
-    private boolean sendStartTaskMsgToTask(final UUID taskId) {
+    private boolean sendStartTaskMsg(final UUID taskId) {
         Option<ActorRef> optionalTaskRef = getContext().child(taskId.toString());
 
         if (optionalTaskRef.isEmpty()) {

@@ -23,10 +23,18 @@ public class Task extends AbstractActor {
 
     @Override
     public Receive createReceive() {
-        return receiveBuilder().match(StartTaskMsg.class, this::handleStartTaskMsg).build();
+        return receiveBuilder()
+                .match(StartTaskMsg.class, this::handleStartTaskMsg)
+                .match(StopTaskMsg.class, this::handleStopTaskMsg)
+                .build();
     }
 
     private void handleStartTaskMsg(final StartTaskMsg msg) {
-        log.info("Started message: '{}' has address: '{}' and body '{}'", msg, address, body);
+        log.info("Started task has address: '{}' and body '{}'", address, body);
+    }
+
+    private void handleStopTaskMsg(final StopTaskMsg msg) {
+        log.info("task: '{}' complete", getSelf());
+        getContext().stop(getSelf());
     }
 }
