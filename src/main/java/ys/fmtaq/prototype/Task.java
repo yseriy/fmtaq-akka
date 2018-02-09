@@ -1,8 +1,12 @@
 package ys.fmtaq.prototype;
 
 import akka.actor.AbstractActor;
+import akka.event.Logging;
+import akka.event.LoggingAdapter;
 
 public class Task extends AbstractActor {
+
+    private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
 
     @Override
     public Receive createReceive() {
@@ -10,6 +14,6 @@ public class Task extends AbstractActor {
     }
 
     private void handleNewTaskMsg(final NewTaskMsg msg) {
-        System.out.println(msg + " " + getSelf());
+        log.info("{} {}", msg, getSelf());
     }
 }

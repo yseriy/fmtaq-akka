@@ -3,6 +3,8 @@ package ys.fmtaq.prototype;
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
+import akka.event.Logging;
+import akka.event.LoggingAdapter;
 import scala.Option;
 
 import java.util.LinkedList;
@@ -11,6 +13,7 @@ import java.util.UUID;
 
 public class SubQueue extends AbstractActor {
 
+    private final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
     private final Queue<UUID> queue = new LinkedList<>();
 
     @Override
@@ -25,8 +28,8 @@ public class SubQueue extends AbstractActor {
         Option<ActorRef> optionalTaskRef = getContext().child(msg.getTaskId().toString());
 
         if (optionalTaskRef.isDefined()) {
-            System.out.println("receive message to create new task: '" + msg.getTaskId()
-                    + "' but this task already exists in sub_queue: " + msg.getSubQueueId() + "'");
+            log.error("receive message to create new task: '{}' but this task already exists in sub_queue: '{}'",
+                    msg.getTaskId(), msg.getSubQueueId());
             return;
         }
 
@@ -47,20 +50,20 @@ public class SubQueue extends AbstractActor {
         UUID taskIdForRemove = queue.peek();
 
         if (taskIdForRemove == null) {
-            System.out.println("receive message to complete task: '" + msg.getTaskId()
-                    + "' but sub_queue: '" + msg.getSubQueueId() + "' is empty");
+            log.error("receive message to complete task: '{}' but sub_queue: '{}' is empty", msg.getTaskId(),
+                    msg.getSubQueueId());
             return;
         }
 
         if (!taskIdForRemove.equals(msg.getTaskId())) {
-            System.out.println("receive message to complete task: '" + msg.getTaskId()
-                    + "' which is not a head of sub_queue: '" + msg.getSubQueueId() + "'");
+            log.error("receive message to complete task: '{}' which is not a head of sub_queue: '{}'",
+                    msg.getTaskId(), msg.getSubQueueId());
             return;
         }
 
         if (!sendTaskCompleteMsgToTask(msg)) {
-            System.out.println("receive message to complete task: '" + msg.getTaskId()
-                    + "' but cannot find this task in sub_queue: '" + msg.getSubQueueId() + "'");
+            log.error("receive message to complete task: '{}' but cannot find this task in sub_queue: '{}'",
+                    msg.getTaskId(), msg.getSubQueueId());
             return;
         }
 
@@ -89,7 +92,7 @@ public class SubQueue extends AbstractActor {
         }
 
         if (!sendStartTaskMsgToTask(taskId)) {
-            System.out.println("cannot find task: '" + taskId + "'");
+            log.error("cannot find task: '{}' to start in sub_queue: '{}'", taskId, getSelf().path().name());
         }
     }
 
