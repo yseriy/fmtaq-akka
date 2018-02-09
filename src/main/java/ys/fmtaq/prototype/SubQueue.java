@@ -2,7 +2,6 @@ package ys.fmtaq.prototype;
 
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
-import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import scala.Option;
@@ -33,9 +32,7 @@ public class SubQueue extends AbstractActor {
             return;
         }
 
-        ActorRef taskRef = getContext().actorOf(Props.create(Task.class), msg.getTaskId().toString());
-        taskRef.tell(msg, getSelf());
-
+        ActorRef taskRef = getContext().actorOf(Task.props(msg), msg.getTaskId().toString());
         queue.add(msg.getTaskId());
         startTaskIfItIsQueueHead(taskRef);
     }
