@@ -1,4 +1,4 @@
-package ys.fmtaq.prototype;
+package ys.fmtaq.prototype.queue;
 
 import akka.actor.AbstractActor;
 

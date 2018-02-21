@@ -1,9 +1,9 @@
-package ys.fmtaq.prototype;
+package ys.fmtaq.prototype.queue;
 
 import java.util.Objects;
 import java.util.UUID;
 
-public class TaskCompleteMsg {
+public class TaskCompleteMsg implements TaskMessages {
 
     private final UUID taskId;
     private final String subQueueId;

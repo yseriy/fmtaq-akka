@@ -1,15 +1,15 @@
-package ys.fmtaq.prototype;
+package ys.fmtaq.prototype.queue;
 
 import java.util.Objects;
 import java.util.UUID;
 
-public class TaskMsg {
+public class TaskMsg implements TaskMessages {
     private final UUID taskId;
     private final String subQueueId;
     private final String address;
     private final String body;
 
-    TaskMsg(final String subQueueId, final String address, final String body) {
+    public TaskMsg(final String subQueueId, final String address, final String body) {
         this.taskId = UUID.randomUUID();
         this.subQueueId = subQueueId;
         this.address = address;
