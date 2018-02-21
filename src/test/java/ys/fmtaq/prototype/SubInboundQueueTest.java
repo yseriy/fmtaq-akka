@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class SubQueueTest {
+public class SubInboundQueueTest {
 
     private static ActorSystem system;
 
@@ -28,7 +28,7 @@ public class SubQueueTest {
     @Test
     public void testSendMessage() {
 //        TestKit testKit = new TestKit(system);
-//        ActorRef actorRef = system.actorOf(Props.create(Queue.class), "test-main");
+//        ActorRef actorRef = system.actorOf(Props.create(InboundQueue.class), "test-main");
 //
 //        actorRef.tell("pprint", ActorRef.noSender());
 //        String message = testKit.expectMsgClass(String.class);

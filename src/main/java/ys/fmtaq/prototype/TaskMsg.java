@@ -3,13 +3,13 @@ package ys.fmtaq.prototype;
 import java.util.Objects;
 import java.util.UUID;
 
-public class NewTaskMsg {
+public class TaskMsg {
     private final UUID taskId;
     private final String subQueueId;
     private final String address;
     private final String body;
 
-    NewTaskMsg(final String subQueueId, final String address, final String body) {
+    TaskMsg(final String subQueueId, final String address, final String body) {
         this.taskId = UUID.randomUUID();
         this.subQueueId = subQueueId;
         this.address = address;
@@ -34,7 +34,7 @@ public class NewTaskMsg {
 
     @Override
     public String toString() {
-        return "NewTaskMsg{taskId='" + taskId + "', subQueueId='" + subQueueId
+        return "TaskMsg{taskId='" + taskId + "', subQueueId='" + subQueueId
                 + "', address='" + address + "', body='" + body + "'}";
     }
 
@@ -48,8 +48,8 @@ public class NewTaskMsg {
             return false;
         }
 
-        NewTaskMsg newTaskMsg = (NewTaskMsg) o;
-        return Objects.equals(getTaskId(), newTaskMsg.getTaskId());
+        TaskMsg taskMsg = (TaskMsg) o;
+        return Objects.equals(getTaskId(), taskMsg.getTaskId());
     }
 
     @Override

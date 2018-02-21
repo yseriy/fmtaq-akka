@@ -11,19 +11,22 @@ import java.util.List;
 public class FmtaqAkka {
 
     public static void main(final String[] args) throws IOException {
-        ActorSystem actorSystem = ActorSystem.create("Fmtaq");
-        ActorRef queueRef = actorSystem.actorOf(Props.create(Queue.class), "queue");
+        FmtaqAkkaConfig config = FmtaqAkkaConfig.INSTANCE;
 
-        List<NewTaskMsg> messages = new ArrayList<>();
-        messages.add(new NewTaskMsg("sub_queue_1", "address_1", "body_1"));
-        messages.add(new NewTaskMsg("sub_queue_2", "address_2", "body_2"));
-        NewTaskMsg msg3 = new NewTaskMsg("sub_queue_3", "address_3", "body_3");
+        ActorSystem actorSystem = ActorSystem.create(config.getSystemName());
+        ActorRef outboundStream = actorSystem.actorOf(Props.create(OutboundQueue.class), config.getOutboundStreamAddress());
+        ActorRef inboundQueue = actorSystem.actorOf(InboundQueue.props(outboundStream), config.getInboundStreamAddress());
+
+        List<TaskMsg> messages = new ArrayList<>();
+        messages.add(new TaskMsg("sub_queue_1", "address_1", "body_1"));
+        messages.add(new TaskMsg("sub_queue_2", "address_2", "body_2"));
+        TaskMsg msg3 = new TaskMsg("sub_queue_3", "address_3", "body_3");
         messages.add(msg3);
-        NewTaskMsg msg4 = new NewTaskMsg("sub_queue_3", "address_3", "body_4");
+        TaskMsg msg4 = new TaskMsg("sub_queue_3", "address_3", "body_4");
         messages.add(msg4);
 
-        messages.forEach(msg -> queueRef.tell(msg, ActorRef.noSender()));
-        queueRef.tell(new TaskCompleteMsg(msg3.getTaskId(), msg3.getSubQueueId()), ActorRef.noSender());
+        messages.forEach(msg -> inboundQueue.tell(msg, ActorRef.noSender()));
+        inboundQueue.tell(new TaskCompleteMsg(msg3.getTaskId(), msg3.getSubQueueId()), ActorRef.noSender());
 
 
         System.out.println(">>> Press ENTER to exit <<<");
