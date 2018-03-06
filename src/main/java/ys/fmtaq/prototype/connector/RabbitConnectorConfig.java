@@ -2,7 +2,7 @@ package ys.fmtaq.prototype.connector;
 
 import java.util.Map;
 
-public class RabbitConfig {
+public class RabbitConnectorConfig {
 
     private final String host;
     private final Integer port;
@@ -49,8 +49,8 @@ public class RabbitConfig {
         }
     }
 
-    public RabbitConfig(final String host, final Integer port, final String username, final String password,
-                        final QueueConfig mainQueue, final QueueConfig hostQueue) {
+    public RabbitConnectorConfig(final String host, final Integer port, final String username, final String password,
+                                 final QueueConfig mainQueue, final QueueConfig hostQueue) {
         this.host = host;
         this.port = port;
         this.username = username;

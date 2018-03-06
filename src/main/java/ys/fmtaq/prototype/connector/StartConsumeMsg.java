@@ -1,4 +1,4 @@
 package ys.fmtaq.prototype.connector;
 
-public class StopMsg {
+class StartConsumeMsg {
 }
