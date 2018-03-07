@@ -1,6 +1,6 @@
 package ys.fmtaq.prototype.connector;
 
-public class OutgoingMsg {
+public final class OutgoingMsg {
 
     private final String Address;
     private final String body;

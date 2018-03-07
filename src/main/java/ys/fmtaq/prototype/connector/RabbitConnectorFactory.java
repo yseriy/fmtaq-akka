@@ -34,9 +34,6 @@ public class RabbitConnectorFactory {
 
         Props connectorProps = RabbitConnector.props(topologyChannel, inboundChannel, outboundChannel, upstream, config);
         return actorSystem.actorOf(connectorProps, "connector");
-//        setupConsumer(connection, connectorRef);
-
-//        return connectorRef;
     }
 
     private ConnectionFactory getFactory() {
@@ -48,19 +45,4 @@ public class RabbitConnectorFactory {
 
         return factory;
     }
-
-//    private void setupConsumer(Connection connection, ActorRef connectorRef) throws IOException {
-//        Channel inboundChannel = connection.createChannel();
-//        DeliverCallback deliverCallback = (consumerTag, message) -> deliverCallback(connectorRef, consumerTag, message);
-//        CancelCallback cancelCallback = this::cancelCallback;
-//        inboundChannel.basicConsume(config.getMainQueue().getQueueName(), true, deliverCallback, cancelCallback);
-//    }
-
-//    private void deliverCallback(final ActorRef connectorRef, final String consumerTag, final Delivery message) {
-//        connectorRef.tell(new IncomingMsg(new String(message.getBody())), ActorRef.noSender());
-//    }
-//
-//    private void cancelCallback(final String consumerTag) {
-//
-//    }
 }

@@ -11,7 +11,7 @@ public class RabbitConnectorConfig {
     private final QueueConfig mainQueue;
     private final QueueConfig hostQueue;
 
-    public class QueueConfig {
+    public static class QueueConfig {
 
         private final String queueName;
         private final Boolean durable;

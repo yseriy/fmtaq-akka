@@ -1,105 +1,101 @@
 package ys.fmtaq.prototype.connector;
 
-import akka.actor.AbstractActor;
+import akka.actor.AbstractFSM;
+import akka.actor.FSM;
 import akka.actor.Props;
+import akka.japi.pf.FSMStateFunctionBuilder;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Delivery;
 
 import java.io.IOException;
 
-class RabbitConsumer extends AbstractActor {
+enum RabbitConsumerState {
+    Run, Idle
+}
 
+final class RabbitConsumerData {
     private final Channel inboundChannel;
     private final String queueName;
     private String consumerTag;
 
-    public static Props props(Channel inboundChannel, String queueName) {
-        return Props.create(RabbitConsumer.class, () -> new RabbitConsumer(inboundChannel, queueName));
-    }
-
-    private RabbitConsumer(Channel inboundChannel, String queueName) {
+    RabbitConsumerData(final Channel inboundChannel, final String queueName) {
         this.inboundChannel = inboundChannel;
         this.queueName = queueName;
     }
 
-    Channel getInboundChannel() {
+    public Channel getInboundChannel() {
         return inboundChannel;
-    }
-
-    String getConsumerTag() {
-        return consumerTag;
     }
 
     public String getQueueName() {
         return queueName;
     }
 
+    public String getConsumerTag() {
+        return consumerTag;
+    }
+
     public void setConsumerTag(String consumerTag) {
         this.consumerTag = consumerTag;
     }
-
-    @Override
-    public Receive createReceive() {
-        RabbitConsumeStopState rabbitConsumeStopState = new RabbitConsumeStopState(this);
-        return rabbitConsumeStopState.createReceive();
-    }
 }
 
-class RabbitConsumeRunState {
+class RabbitConsumer extends AbstractFSM<RabbitConsumerState, RabbitConsumerData> {
 
-    private final RabbitConsumer consumer;
-
-    RabbitConsumeRunState(RabbitConsumer consumer) {
-        this.consumer = consumer;
+    public static Props props(final Channel inboundChannel, final String queueName) {
+        return Props.create(RabbitConsumer.class, () -> new RabbitConsumer(inboundChannel, queueName));
     }
 
-    AbstractActor.Receive createReceive() {
-        return consumer.receiveBuilder()
-                .match(StartConsumeMsg.class, this::handleStartConsume)
-                .match(StopConsumeMsg.class, this::handleStopConsume)
-                .build();
+    private RabbitConsumer(final Channel inboundChannel, final String queueName) {
+        startWith(RabbitConsumerState.Idle, new RabbitConsumerData(inboundChannel, queueName));
+
+        when(RabbitConsumerState.Run, handleRunState());
+        when(RabbitConsumerState.Idle, handleIdleSate());
+
+        initialize();
     }
 
-    private void handleStartConsume(StartConsumeMsg msg) {
-
+    private FSMStateFunctionBuilder<RabbitConsumerState, RabbitConsumerData> handleRunState() {
+        return matchEvent(StopConsumeMsg.class, this::stopConsume);
     }
 
-    private void handleStopConsume(StopConsumeMsg msg) throws IOException {
-        consumer.getInboundChannel().basicCancel(consumer.getConsumerTag());
-    }
-}
+    private FSM.State<RabbitConsumerState, RabbitConsumerData> stopConsume(
+            final StopConsumeMsg msg, final RabbitConsumerData data) throws IOException {
 
-class RabbitConsumeStopState {
+        String consumerTag = data.getConsumerTag();
+        Channel channel = data.getInboundChannel();
 
-    private final RabbitConsumer consumer;
+        if (consumerTag != null) {
+            channel.basicCancel(data.getConsumerTag());
+            data.setConsumerTag(null);
+        }
 
-    RabbitConsumeStopState(RabbitConsumer consumer) {
-        this.consumer = consumer;
-    }
-
-    AbstractActor.Receive createReceive() {
-        return consumer.receiveBuilder()
-                .match(StartConsumeMsg.class, this::handleStartConsume)
-                .match(StopConsumeMsg.class, this::handleStopConsume)
-                .build();
+        return goTo(RabbitConsumerState.Idle);
     }
 
-    private void handleStartConsume(StartConsumeMsg msg) throws IOException {
-        RabbitConsumeRunState rabbitConsumeRunState = new RabbitConsumeRunState(consumer);
-        String consumerTag = consumer.getInboundChannel().basicConsume(consumer.getQueueName(), true,
-                this::deliverCallback, this::cancelCallback);
-        consumer.setConsumerTag(consumerTag);
-        consumer.getContext().become(rabbitConsumeRunState.createReceive());
+    private FSMStateFunctionBuilder<RabbitConsumerState, RabbitConsumerData> handleIdleSate() {
+        return matchEvent(StartConsumeMsg.class, this::startConsume);
     }
 
-    private void deliverCallback(String consumerTag, Delivery message) {
-        consumer.getContext().getParent().tell(message, consumer.getSelf());
+    private FSM.State<RabbitConsumerState, RabbitConsumerData> startConsume(
+            final StartConsumeMsg msg, final RabbitConsumerData data) throws IOException {
+
+        final boolean autoAck = true;
+        String queueName = data.getQueueName();
+        Channel channel = data.getInboundChannel();
+
+        String consumerTag = channel.basicConsume(queueName, autoAck, this::deliverCallback, this::cancelCallback);
+        data.setConsumerTag(consumerTag);
+
+        return goTo(RabbitConsumerState.Run);
     }
 
-    private void cancelCallback(String consumerTag) {
-
+    private void deliverCallback(final String consumerTag, final Delivery message) {
+        getContext().getParent().tell(message, getSelf());
     }
 
-    private void handleStopConsume(StopConsumeMsg msg) {
+    private void cancelCallback(final String consumerTag) {
+        log().error("server canceled consume. consumer: '{}'. go to idle state", consumerTag);
+        getSelf().tell(new StopConsumeMsg(), getSelf());
     }
 }
